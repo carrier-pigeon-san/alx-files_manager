@@ -1,4 +1,5 @@
 # Ignore files:
 package-lock.json
+main.js
 # Ignore directories:
 node_modules/
