@@ -20,8 +20,10 @@ const files = async (req, res) => {
   if (!user) {
     return res.status(401).send({ error: 'Unauthorized' });
   }
-  
-  const { name, type, parentId, isPublic, data } = req.body;
+
+  const {
+    name, type, parentId, isPublic, data,
+  } = req.body;
   if (!name) {
     return res.status(400).send({ error: 'Missing name' });
   }
@@ -67,13 +69,16 @@ const files = async (req, res) => {
 
   const buff = Buffer.from(data, 'base64');
   const filePath = `${path}/${uuidv4()}`;
-  fs.writeFile(filePath, buff, async (error) => {
-    if (error) {
-      return res.status(500).send({ error: 'Cannot write the file' });
-    }
 
-    const newFile = await dbClient.db.collection('files').insertOne({ ...file, localPath: filePath });
-    return res.status(201).send({ id: newFile.insertedId, ...file });
+  return new Promise((resolve, reject) => {
+    fs.writeFile(filePath, buff, async (error) => {
+      if (error) {
+        return reject(res.status(500).send({ error: 'Cannot write the file' }));
+      }
+
+      const newFile = await dbClient.db.collection('files').insertOne({ ...file, localPath: filePath });
+      return resolve(res.status(201).send({ id: newFile.insertedId, ...file }));
+    });
   });
 };
 
