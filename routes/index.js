@@ -24,4 +24,8 @@ router.get('/files/:id', FilesController.getUserFile);
 
 router.get('/files', FilesController.getAllUserFiles);
 
+router.put('/files/:id/publish', FilesController.publish);
+
+router.put('/files/:id/unpublish', FilesController.unpublish);
+
 module.exports = router;
