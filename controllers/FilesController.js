@@ -3,6 +3,8 @@ const { ObjectId } = require('mongodb');
 const { v4: uuidv4 } = require('uuid');
 const dbClient = require('../utils/db');
 const redisClient = require('../utils/redis');
+const { match } = require('assert');
+const { type } = require('os');
 
 const files = async (req, res) => {
   const token = req.get('X-Token');
@@ -82,6 +84,62 @@ const files = async (req, res) => {
   });
 };
 
+const getUserFile = async (req, res) => {
+  const fileId = req.params.id;  
+
+  const token = req.get('X-Token');
+  if (!token) {
+    return res.status(401).send({ error: 'Unauthorized' });
+  }
+
+  const redisTokenKey = `auth_${token}`;
+  const userId = await redisClient.get(redisTokenKey);
+  if (!userId) {
+    return res.status(401).send({ error: 'Unauthorized' });
+  }
+
+  const file = await dbClient.db.collection('files').findOne({ _id: ObjectId(fileId), userId: ObjectId(userId) });
+  if (!file) {
+    return res.status(404).send({ error: 'Not found' });
+  }
+
+  return res.status(200).send({ id: file._id, ...file });
+};
+
+const getAllUserFiles = async (req, res) => {
+  const parentId = req.query.parentId || 0;
+  const page = req.query.page || 0;
+
+  const token = req.get('X-Token');
+  if (!token) {
+    return res.status(401).send({ error: 'Unauthorized' });
+  }
+
+  const redisTokenKey = `auth_${token}`;
+  const userId = await redisClient.get(redisTokenKey);
+  if (!userId) {
+    return res.status(401).send({ error: 'Unauthorized' });
+  }
+
+  const files = await dbClient.db.collection('files').aggregate([
+    { $match: { parentId, userId } },
+    { $skip: page * 20 },
+    { $limit: 20 }
+  ]).toArray();
+
+  const filesList = files.map((file) => {
+    const { _id, ...fileInfo } = file;
+    if (fileInfo.type === 'folder') {
+      delete fileInfo.data;
+    }
+    return { id: _id, ...fileInfo };
+    });
+
+  return res.status(200).send(filesList);
+}
+
 module.exports = {
   files,
+  getUserFile,
+  getAllUserFiles
 };
