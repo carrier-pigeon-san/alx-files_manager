@@ -3,8 +3,6 @@ const { ObjectId } = require('mongodb');
 const { v4: uuidv4 } = require('uuid');
 const dbClient = require('../utils/db');
 const redisClient = require('../utils/redis');
-const { match } = require('assert');
-const { type } = require('os');
 
 const files = async (req, res) => {
   const token = req.get('X-Token');
@@ -85,7 +83,7 @@ const files = async (req, res) => {
 };
 
 const getUserFile = async (req, res) => {
-  const fileId = req.params.id;  
+  const fileId = req.params.id;
 
   const token = req.get('X-Token');
   if (!token) {
@@ -97,7 +95,7 @@ const getUserFile = async (req, res) => {
   if (!userId) {
     return res.status(401).send({ error: 'Unauthorized' });
   }
-  console.log('Query:', { fileId, userId});
+
   const file = await dbClient.db.collection('files').findOne({ _id: ObjectId(fileId), userId });
   if (!file) {
     return res.status(404).send({ error: 'Not found' });
@@ -124,7 +122,7 @@ const getAllUserFiles = async (req, res) => {
   const files = await dbClient.db.collection('files').aggregate([
     { $match: { parentId, userId } },
     { $skip: page * 20 },
-    { $limit: 20 }
+    { $limit: 20 },
   ]).toArray();
 
   const filesList = files.map((file) => {
@@ -133,13 +131,13 @@ const getAllUserFiles = async (req, res) => {
       delete fileInfo.data;
     }
     return { id: _id, ...fileInfo };
-    });
+  });
 
   return res.status(200).send(filesList);
-}
+};
 
 module.exports = {
   files,
   getUserFile,
-  getAllUserFiles
+  getAllUserFiles,
 };
