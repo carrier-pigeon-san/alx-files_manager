@@ -96,6 +96,11 @@ const getUserFile = async (req, res) => {
     return res.status(401).send({ error: 'Unauthorized' });
   }
 
+  const user = await dbClient.db.collection('users').findOne({ _id: ObjectId(uId) });
+  if (!user) {
+    return res.status(401).send({ error: 'Unauthorized' });
+  }
+
   const file = await dbClient.db.collection('files').findOne({ _id: ObjectId(fileId), userId: uId });
   if (!file) {
     return res.status(404).send({ error: 'Not found' });
@@ -128,18 +133,23 @@ const getAllUserFiles = async (req, res) => {
     return res.status(401).send({ error: 'Unauthorized' });
   }
 
+  const user = await dbClient.db.collection('users').findOne({ _id: ObjectId(userId) });
+  if (!user) {
+    return res.status(401).send({ error: 'Unauthorized' });
+  }
+
   const files = await dbClient.db.collection('files').aggregate([
     { $match: { parentId, userId } },
     { $skip: page * 20 },
     { $limit: 20 },
   ]).toArray();
 
-    const filesList = files.map((file) => {
-      const { _id, ...fileInfo } = file;
-      delete fileInfo.data;
-      delete fileInfo.localPath;
-      return { id: _id, ...fileInfo };
-    });
+  const filesList = files.map((file) => {
+    const { _id, ...fileInfo } = file;
+    delete fileInfo.data;
+    delete fileInfo.localPath;
+    return { id: _id, ...fileInfo };
+  });
 
   return res.status(200).send(filesList);
 };
