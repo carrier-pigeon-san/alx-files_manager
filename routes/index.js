@@ -20,4 +20,8 @@ router.get('/users/me', UsersController.userMe);
 
 router.post('/files', FilesController.files);
 
+router.get('/files/:id', FilesController.getUserFile);
+
+router.get('/files', FilesController.getAllUserFiles);
+
 module.exports = router;
