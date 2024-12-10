@@ -119,7 +119,7 @@ const getUserFile = async (req, res) => {
 };
 
 const getAllUserFiles = async (req, res) => {
-  const parentId = parseInt(req.query.parentId, 10) || 0;
+  const parentId = req.query.parentId ? parseInt(req.query.parentId, 10) : undefined;
   const page = parseInt(req.query.page, 10) || 0;
 
   const token = req.get('X-Token');
@@ -138,8 +138,14 @@ const getAllUserFiles = async (req, res) => {
     return res.status(401).send({ error: 'Unauthorized' });
   }
 
+  const matchCondition = { userId };
+
+  if (parentId !== undefined) {
+    matchCondition.parentId = parentId;
+  }
+
   const files = await dbClient.db.collection('files').aggregate([
-    { $match: { parentId, userId } },
+    { $match: matchCondition },
     { $skip: page * 20 },
     { $limit: 20 },
   ]).toArray();
