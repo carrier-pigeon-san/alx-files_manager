@@ -123,17 +123,28 @@ const getAllUserFiles = async (req, res) => {
     { $match: { parentId, userId } },
     { $skip: page * 20 },
     { $limit: 20 },
+    {
+      $project: {
+        _id: 0,
+        id: '$_id',
+        userId: 1,
+        name: 1,
+        type: 1,
+        isPublic: 1,
+        parentId: 1,
+      },
+    },
   ]).toArray();
 
-  const filesList = files.map((file) => {
-    const { _id, ...fileInfo } = file;
-    if (fileInfo.type === 'folder') {
-      delete fileInfo.data;
-    }
-    return { id: _id, ...fileInfo };
-  });
+  //   const filesList = files.map((file) => {
+  //     const { _id, ...fileInfo } = file;
+  //     if (fileInfo.type === 'folder') {
+  //       delete fileInfo.data;
+  //     }
+  //     return { id: _id, ...fileInfo };
+  //   });
 
-  return res.status(200).send(filesList);
+  return res.status(200).send(files);
 };
 
 module.exports = {
