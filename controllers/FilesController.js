@@ -91,17 +91,26 @@ const getUserFile = async (req, res) => {
   }
 
   const redisTokenKey = `auth_${token}`;
-  const userId = await redisClient.get(redisTokenKey);
-  if (!userId) {
+  const uId = await redisClient.get(redisTokenKey);
+  if (!uId) {
     return res.status(401).send({ error: 'Unauthorized' });
   }
 
-  const file = await dbClient.db.collection('files').findOne({ _id: ObjectId(fileId), userId });
+  const file = await dbClient.db.collection('files').findOne({ _id: ObjectId(fileId), userId: uId });
   if (!file) {
     return res.status(404).send({ error: 'Not found' });
   }
 
-  return res.status(200).send({ id: file._id, ...file });
+  const filesList = {
+    id: file._id,
+    userId: file.userId,
+    name: file.name,
+    type: file.type,
+    isPublic: file.isPublic,
+    parentId: file.parentId,
+  };
+
+  return res.status(200).send({ ...filesList });
 };
 
 const getAllUserFiles = async (req, res) => {
@@ -123,28 +132,16 @@ const getAllUserFiles = async (req, res) => {
     { $match: { parentId, userId } },
     { $skip: page * 20 },
     { $limit: 20 },
-    {
-      $project: {
-        _id: 0,
-        id: '$_id',
-        userId: 1,
-        name: 1,
-        type: 1,
-        isPublic: 1,
-        parentId: 1,
-      },
-    },
   ]).toArray();
 
-  //   const filesList = files.map((file) => {
-  //     const { _id, ...fileInfo } = file;
-  //     if (fileInfo.type === 'folder') {
-  //       delete fileInfo.data;
-  //     }
-  //     return { id: _id, ...fileInfo };
-  //   });
+    const filesList = files.map((file) => {
+      const { _id, ...fileInfo } = file;
+      delete fileInfo.data;
+      delete fileInfo.localPath;
+      return { id: _id, ...fileInfo };
+    });
 
-  return res.status(200).send(files);
+  return res.status(200).send(filesList);
 };
 
 module.exports = {
