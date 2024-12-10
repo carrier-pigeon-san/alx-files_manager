@@ -160,8 +160,86 @@ const getAllUserFiles = async (req, res) => {
   return res.status(200).send(filesList);
 };
 
+const publish = async (req, res) => {
+  const fileId = req.params.id;
+  const token = req.get('X-Token');
+  if (!token) {
+    return res.status(401).send({ error: 'Unauthorized' });
+  }
+
+  const uId = await redisClient.get(`auth_${token}`);
+  if (!uId) {
+    return res.status(401).send({ error: 'Unauthorized' });
+  }
+
+  const user = await dbClient.db.collection('users').findOne({ _id: ObjectId(uId) });
+  if (!user) {
+    return res.status(401).send({ error: 'Unauthorized' });
+  }
+
+  const file = await dbClient.db.collection('files').findOne({ _id: ObjectId(fileId), userId: uId });
+  if (!file) {
+    return res.status(404).send({ error: 'Not found' });
+  }
+
+  if (!file.isPublic) {
+    await dbClient.db.collection('files').updateOne({ _id: ObjectId(fileId) }, { $set: { isPublic: true } });
+  }
+
+  const fileObj = {
+    id: file._id,
+    userId: file.userId,
+    name: file.name,
+    type: file.type,
+    isPublic: !file.isPublic,
+    parentId: file.parentId,
+  };
+
+  return res.status(200).send(fileObj);
+};
+
+const unpublish = async (req, res) => {
+  const fileId = req.params.id;
+  const token = req.get('X-Token');
+  if (!token) {
+    return res.status(401).send({ error: 'Unauthorized' });
+  }
+
+  const uId = await redisClient.get(`auth_${token}`);
+  if (!uId) {
+    return res.status(401).send({ error: 'Unauthorized' });
+  }
+
+  const user = await dbClient.db.collection('users').findOne({ _id: ObjectId(uId) });
+  if (!user) {
+    return res.status(401).send({ error: 'Unauthorized' });
+  }
+
+  const file = await dbClient.db.collection('files').findOne({ _id: ObjectId(fileId), userId: uId });
+  if (!file) {
+    return res.status(404).send({ error: 'Not found' });
+  }
+
+  if (file.isPublic) {
+    await dbClient.db.collection('files').updateOne({ _id: ObjectId(fileId) }, { $set: { isPublic: false } });
+  }
+
+  const fileObj = {
+    id: file._id,
+    userId: file.userId,
+    name: file.name,
+    type: file.type,
+    isPublic: !file.isPublic,
+    parentId: file.parentId,
+  };
+
+  return res.status(200).send(fileObj);
+};
+
 module.exports = {
   files,
   getUserFile,
   getAllUserFiles,
+  publish,
+  unpublish,
 };
