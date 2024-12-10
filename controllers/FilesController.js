@@ -97,8 +97,8 @@ const getUserFile = async (req, res) => {
   if (!userId) {
     return res.status(401).send({ error: 'Unauthorized' });
   }
-
-  const file = await dbClient.db.collection('files').findOne({ _id: ObjectId(fileId), userId: ObjectId(userId) });
+  console.log('Query:', { fileId, userId});
+  const file = await dbClient.db.collection('files').findOne({ _id: ObjectId(fileId), userId });
   if (!file) {
     return res.status(404).send({ error: 'Not found' });
   }
@@ -107,8 +107,8 @@ const getUserFile = async (req, res) => {
 };
 
 const getAllUserFiles = async (req, res) => {
-  const parentId = req.query.parentId || 0;
-  const page = req.query.page || 0;
+  const parentId = parseInt(req.query.parentId, 10) || 0;
+  const page = parseInt(req.query.page, 10) || 0;
 
   const token = req.get('X-Token');
   if (!token) {
