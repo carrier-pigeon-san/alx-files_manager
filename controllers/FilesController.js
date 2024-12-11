@@ -267,7 +267,7 @@ const getFile = async (req, res) => {
   if (!fs.existsSync(file.localPath)) {
     return res.status(404).send({ error: 'Not found' });
   }
-  
+
   const mimeType = mime.lookup(file.name);
   res.setHeader('Content-Type', mimeType);
 
