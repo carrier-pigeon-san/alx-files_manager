@@ -4,6 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 const mime = require('mime-types');
 const dbClient = require('../utils/db');
 const redisClient = require('../utils/redis');
+const fileQueue = require('../utils/queue');
 
 const postUpload = async (req, res) => {
   const token = req.get('X-Token');
@@ -78,6 +79,9 @@ const postUpload = async (req, res) => {
       }
 
       const newFile = await dbClient.db.collection('files').insertOne({ ...file, localPath: filePath });
+      if (newFile.type === 'image') {
+        fileQueue.add({ userId, fileId: newFile.insertedId });
+      }
       return resolve(res.status(201).send({ id: newFile.insertedId, ...file }));
     });
   });
@@ -238,6 +242,7 @@ const putUnpublish = async (req, res) => {
 };
 
 const getFile = async (req, res) => {
+  const { size } = req.query;
   const fileId = req.params.id;
   const file = await dbClient.db.collection('files').findOne({ _id: ObjectId(fileId) });
   if (!file) {
@@ -270,6 +275,18 @@ const getFile = async (req, res) => {
 
   const mimeType = mime.lookup(file.name);
   res.setHeader('Content-Type', mimeType);
+
+  if (size) {
+    if (size === '500' || size === '250' || size === '100') {
+      const resizedFilePath = `${file.localPath}_${size}`;
+      if (!fs.existsSync(resizedFilePath)) {
+        return res.status(404).send({ error: 'Not found' });
+      }
+
+      const resizedFileData = fs.readFileSync(resizedFilePath);
+      return res.status(200).send(resizedFileData);
+    }
+  }
 
   const fileData = fs.readFileSync(file.localPath);
   return res.status(200).send(fileData);
