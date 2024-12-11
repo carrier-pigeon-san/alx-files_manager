@@ -5,7 +5,7 @@ const mime = require('mime-types');
 const dbClient = require('../utils/db');
 const redisClient = require('../utils/redis');
 
-const files = async (req, res) => {
+const postUpload = async (req, res) => {
   const token = req.get('X-Token');
   if (!token) {
     return res.status(401).send({ error: 'Unauthorized' });
@@ -83,7 +83,7 @@ const files = async (req, res) => {
   });
 };
 
-const getUserFile = async (req, res) => {
+const getShow = async (req, res) => {
   const fileId = req.params.id;
 
   const token = req.get('X-Token');
@@ -119,7 +119,7 @@ const getUserFile = async (req, res) => {
   return res.status(200).send({ ...filesList });
 };
 
-const getAllUserFiles = async (req, res) => {
+const getIndex = async (req, res) => {
   const parentId = req.query.parentId ? parseInt(req.query.parentId, 10) : undefined;
   const page = parseInt(req.query.page, 10) || 0;
 
@@ -161,7 +161,7 @@ const getAllUserFiles = async (req, res) => {
   return res.status(200).send(filesList);
 };
 
-const publish = async (req, res) => {
+const putPublish = async (req, res) => {
   const fileId = req.params.id;
   const token = req.get('X-Token');
   if (!token) {
@@ -199,7 +199,7 @@ const publish = async (req, res) => {
   return res.status(200).send(fileObj);
 };
 
-const unpublish = async (req, res) => {
+const putUnpublish = async (req, res) => {
   const fileId = req.params.id;
   const token = req.get('X-Token');
   if (!token) {
@@ -276,10 +276,10 @@ const getFile = async (req, res) => {
 };
 
 module.exports = {
-  files,
-  getUserFile,
-  getAllUserFiles,
-  publish,
-  unpublish,
+  postUpload,
+  getShow,
+  getIndex,
+  putPublish,
+  putUnpublish,
   getFile,
 };

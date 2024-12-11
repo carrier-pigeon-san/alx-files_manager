@@ -18,15 +18,15 @@ router.get('/disconnect', AuthController.disconnect);
 
 router.get('/users/me', UsersController.userMe);
 
-router.post('/files', FilesController.files);
+router.post('/files', FilesController.postUpload);
 
-router.get('/files/:id', FilesController.getUserFile);
+router.get('/files/:id', FilesController.getShow);
 
-router.get('/files', FilesController.getAllUserFiles);
+router.get('/files', FilesController.getIndex);
 
-router.put('/files/:id/publish', FilesController.publish);
+router.put('/files/:id/publish', FilesController.putPublish);
 
-router.put('/files/:id/unpublish', FilesController.unpublish);
+router.put('/files/:id/unpublish', FilesController.putUnpublish);
 
 router.get('/files/:id/data', FilesController.getFile);
 
